@@ -1,0 +1,104 @@
+name: Sync Skills to S3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit for diff
+
+      - name: Detect changed skills
+        id: changes
+        run: |
+          # Get changed skill folders (unique folder names under skills/)
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- skills/ | cut -d/ -f2 | sort -u | tr '\n' ' ')
+          echo "folders=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Changed skills: $CHANGED"
+
+      - name: Configure AWS credentials
+        if: steps.changes.outputs.folders != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+
+      - name: Sync changed skills to S3
+        if: steps.changes.outputs.folders != ''
+        env:
+          S3_BUCKET: ${{ vars.S3_MARKETPLACE_BUCKET || 'xerus-marketplace' }}
+        run: |
+          for slug in ${{ steps.changes.outputs.folders }}; do
+            if [ -d "skills/$slug" ]; then
+              echo "Syncing skills/$slug -> s3://$S3_BUCKET/skills/$slug/"
+              aws s3 sync "skills/$slug" "s3://$S3_BUCKET/skills/$slug/" \
+                --delete \
+                --exclude ".*"
+            else
+              echo "Folder skills/$slug was deleted, removing from S3"
+              aws s3 rm "s3://$S3_BUCKET/skills/$slug/" --recursive
+            fi
+          done
+
+      - name: Upsert skill metadata via API
+        if: steps.changes.outputs.folders != '' && vars.XERUS_API_URL != ''
+        env:
+          API_URL: ${{ vars.XERUS_API_URL }}
+          API_KEY: ${{ secrets.XERUS_API_KEY }}
+        run: |
+          for slug in ${{ steps.changes.outputs.folders }}; do
+            META="skills/$slug/.clawdhub.json"
+            if [ -f "$META" ]; then
+              echo "Upserting metadata for $slug"
+              # Extract fields from .clawdhub.json
+              NAME=$(jq -r '.displayName // .slug' "$META")
+              DESC=$(jq -r '.summary // ""' "$META")
+              VERSION=$(jq -r '.version // "1.0.0"' "$META")
+              TAGS=$(jq -c '.tags // []' "$META")
+              FILE_COUNT=$(find "skills/$slug" -type f ! -name '.*' | wc -l)
+
+              # POST to backend seed endpoint
+              curl -s -X POST "$API_URL/api/v1/skills/seed" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $API_KEY" \
+                -d "{
+                  \"slug\": \"$slug\",
+                  \"name\": \"$NAME\",
+                  \"description\": \"$DESC\",
+                  \"version\": \"$VERSION\",
+                  \"tags\": $TAGS,
+                  \"file_count\": $FILE_COUNT
+                }" || echo "Warning: API upsert failed for $slug"
+            fi
+          done
+
+  # Full sync job - runs on manual trigger or schedule
+  full-sync:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+
+      - name: Full sync all skills to S3
+        env:
+          S3_BUCKET: ${{ vars.S3_MARKETPLACE_BUCKET || 'xerus-marketplace' }}
+        run: |
+          echo "Full sync: all skills -> s3://$S3_BUCKET/skills/"
+          aws s3 sync skills/ "s3://$S3_BUCKET/skills/" \
+            --delete \
+            --exclude ".*"
+          echo "Full sync complete"
