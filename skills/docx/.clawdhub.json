@@ -1,0 +1,7 @@
+{
+  "slug": "docx",
+  "displayName": "docx",
+  "summary": "Create, read, edit, and manipulate Word documents (.docx files) with formatting, tracked changes, and comments.",
+  "tags": ["documents", "word", "office"],
+  "version": "1.0.0"
+}

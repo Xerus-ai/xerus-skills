@@ -1,0 +1,7 @@
+{
+  "slug": "apify",
+  "displayName": "apify",
+  "summary": "Web scraping and automation platform with pre-built Actors for common tasks",
+  "tags": ["scraping", "automation", "web"],
+  "version": "1.0.0"
+}

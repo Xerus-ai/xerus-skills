@@ -1,0 +1,7 @@
+{
+  "slug": "pdf",
+  "displayName": "pdf",
+  "summary": "Read, create, edit, merge, split, fill forms, encrypt, and OCR PDF files.",
+  "tags": ["documents", "pdf", "office"],
+  "version": "1.0.0"
+}

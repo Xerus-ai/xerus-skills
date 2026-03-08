@@ -1,0 +1,7 @@
+{
+  "slug": "rss-fetch",
+  "displayName": "rss-fetch",
+  "summary": "Fetch RSS/Atom feeds via curl. Use this skill to gather news and articles from RSS sources.",
+  "tags": ["rss", "feeds", "news"],
+  "version": "1.0.0"
+}

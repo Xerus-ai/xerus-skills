@@ -1,0 +1,7 @@
+{
+  "slug": "mcp-builder",
+  "displayName": "mcp-builder",
+  "summary": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools.",
+  "tags": ["mcp", "development", "integration"],
+  "version": "1.0.0"
+}

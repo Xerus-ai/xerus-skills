@@ -1,0 +1,7 @@
+{
+  "slug": "beads",
+  "displayName": "beads",
+  "summary": "Tracks complex, multi-session work using the Beads issue tracker and dependency graphs, and provides persistent memory that survives conversation compaction.",
+  "tags": ["task-tracking", "project-management", "memory"],
+  "version": "1.0.0"
+}

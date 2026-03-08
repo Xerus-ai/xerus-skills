@@ -1,0 +1,7 @@
+{
+  "slug": "supadata",
+  "displayName": "supadata",
+  "summary": "Supadata API via curl. Use this skill to extract transcripts from YouTube/TikTok/Instagram videos and scrape web content to markdown.",
+  "tags": ["transcripts", "scraping", "video"],
+  "version": "1.0.0"
+}

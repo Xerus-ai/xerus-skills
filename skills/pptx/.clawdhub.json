@@ -1,0 +1,7 @@
+{
+  "slug": "pptx",
+  "displayName": "pptx",
+  "summary": "Create, read, edit, and manipulate PowerPoint presentations (.pptx files) including slides, templates, layouts, and speaker notes.",
+  "tags": ["documents", "powerpoint", "presentations", "office"],
+  "version": "1.0.0"
+}

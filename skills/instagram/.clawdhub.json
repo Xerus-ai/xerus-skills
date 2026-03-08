@@ -1,0 +1,7 @@
+{
+  "slug": "instagram",
+  "displayName": "instagram",
+  "summary": "Instagram Graph API integration via curl. Use this skill to fetch and publish Instagram media.",
+  "tags": ["social-media", "instagram", "api"],
+  "version": "1.0.0"
+}

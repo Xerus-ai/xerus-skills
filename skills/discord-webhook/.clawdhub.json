@@ -1,0 +1,7 @@
+{
+  "slug": "discord-webhook",
+  "displayName": "discord-webhook",
+  "summary": "Discord Webhook API via curl. Use this skill to send messages, embeds, and files to Discord channels without a bot.",
+  "tags": ["discord", "webhook", "notifications"],
+  "version": "1.0.0"
+}

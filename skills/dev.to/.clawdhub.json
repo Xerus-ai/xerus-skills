@@ -1,0 +1,7 @@
+{
+  "slug": "dev.to",
+  "displayName": "dev.to",
+  "summary": "Dev.to API via curl. Use this skill to publish and manage articles on Dev.to.",
+  "tags": ["publishing", "blogging", "dev.to"],
+  "version": "1.0.0"
+}

@@ -1,0 +1,7 @@
+{
+  "slug": "last30days",
+  "displayName": "last30days",
+  "summary": "Research a topic from the last 30 days. Sources: Reddit, X, YouTube, TikTok, Instagram, Hacker News, Polymarket, web.",
+  "tags": ["research", "news", "social-media", "aggregation"],
+  "version": "1.0.0"
+}
