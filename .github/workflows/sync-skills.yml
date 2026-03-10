@@ -54,10 +54,10 @@ jobs:
           API_KEY: ${{ secrets.XERUS_API_KEY }}
         run: |
           for slug in ${{ steps.changes.outputs.folders }}; do
-            META="skills/$slug/.clawdhub.json"
+            META="skills/$slug/xerushub.json"
             if [ -f "$META" ]; then
               echo "Upserting metadata for $slug"
-              # Extract fields from .clawdhub.json
+              # Extract fields from xerushub.json
               NAME=$(jq -r '.displayName // .slug' "$META")
               DESC=$(jq -r '.summary // ""' "$META")
               VERSION=$(jq -r '.version // "1.0.0"' "$META")

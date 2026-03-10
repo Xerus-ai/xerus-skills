@@ -21,10 +21,10 @@ skills/
 1. Create a folder under `skills/` with a kebab-case slug
 2. Add at minimum a `SKILL.md` file
 3. Optionally add `references/`, `scripts/`, or other supporting files
-4. Include a `.clawdhub.json` metadata file (see format below)
+4. Include a `xerushub.json` metadata file (see format below)
 5. Push to `main` — GitHub Action syncs to S3 automatically
 
-## .clawdhub.json Format
+## xerushub.json Format
 
 ```json
 {
