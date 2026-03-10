@@ -640,3 +640,42 @@ Want another prompt? Just tell me what you're creating next.
 **Bundled scripts:** `scripts/last30days.py` (main research engine), `scripts/lib/` (search, enrichment, rendering modules), `scripts/lib/vendor/bird-search/` (vendored X search client, MIT licensed)
 
 Review scripts before first use to verify behavior.
+
+---
+
+## After Research Protocol (Data Ecosystem)
+
+After completing research, follow the data-steward protocol to persist findings:
+
+### 1. Store in company.db
+```sql
+INSERT INTO research_reports (topic, source_skill, source_agent, key_findings, summary, raw_data_path)
+VALUES ('{TOPIC}', 'last30days', '{AGENT_SLUG}', '{JSON of top 5 findings}', '{2-3 sentence summary}', '~/Documents/Last30Days/{filename}');
+```
+
+### 2. Extract Entities
+Scan research output for companies, people, topics, and products. For each:
+- Create entity file in `.memory/entities/{type}/{slug}.md` (see `.memory/entities/TEMPLATES.md`)
+- Insert DB row (prospects/competitors/topics table)
+- Insert entity_registry row linking file to DB
+
+### 3. Log Content Ideas
+For each actionable insight that could become content:
+```sql
+INSERT INTO content_ideas (title, description, status, target_channel, source_agent, source_research_id)
+VALUES ('{insight as title}', '{context and angle}', 'idea', '{best channel}', '{AGENT_SLUG}', {research_id});
+```
+
+### 4. Notify Downstream
+Write coordination message to channel output/posts.jsonl:
+```json
+{"agent_slug":"{AGENT_SLUG}","content":"[data-steward] Research complete: {TOPIC}. {N} findings stored, {N} entities extracted, {N} content ideas logged. See research_reports id={N}.","message_type":"coordination","metadata":{"target_agent":"curator-carla"},"posted_at":"{ISO}"}
+```
+
+### 5. Update Topics
+```sql
+INSERT OR REPLACE INTO topics (name, description, relevance_score, trend_direction, source_agent, research_count, last_researched_at)
+VALUES ('{TOPIC}', '{description}', {score}, '{direction}', '{AGENT_SLUG}',
+  COALESCE((SELECT research_count + 1 FROM topics WHERE name = '{TOPIC}'), 1),
+  strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));
+```

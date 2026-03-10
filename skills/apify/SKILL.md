@@ -355,3 +355,39 @@ Find more at: https://apify.com/store
 5. **Pagination**: Use `limit` and `offset` for large datasets
 6. **Actor Input**: Each Actor has different input schema - check Actor's page for details
 7. **Credits**: Check usage at https://console.apify.com/billing
+
+---
+
+## After Scraping Protocol (Data Ecosystem)
+
+After completing any Apify scraping run, follow the data-steward protocol:
+
+### 1. Store in company.db
+```sql
+INSERT INTO research_reports (topic, source_skill, source_agent, key_findings, summary, raw_data_path)
+VALUES ('{topic}', 'apify', '{AGENT_SLUG}', '{JSON summary of scraped data}', '{what was scraped and why}', '/tmp/apify_request.json');
+```
+
+### 2. Push to Google Sheets (if gws available)
+If the google-workspace skill is available and `gws` CLI is installed:
+- Create a sheet: `gws sheets create --title "Scrape: {topic} - $(date +%Y-%m-%d)"`
+- Append scraped data as rows
+- Create local reference in `data/drive/`
+- Register in `google_files` table
+
+### 3. Extract Entities
+Scan scraped data for companies, people, products. For each:
+- Create entity file in `.memory/entities/{type}/{slug}.md`
+- Insert DB row (prospects/competitors table)
+- Insert entity_registry row
+
+### 4. Log Content Ideas
+```sql
+INSERT INTO content_ideas (title, description, status, target_channel, source_agent)
+VALUES ('{insight}', '{scraped data context}', 'idea', '{channel}', '{AGENT_SLUG}');
+```
+
+### 5. Notify Downstream
+```json
+{"agent_slug":"{AGENT_SLUG}","content":"[data-steward] Scrape complete: {topic}. {N} items scraped, stored in research_reports id={N}.","message_type":"coordination","metadata":{"target_agent":"curator-carla"},"posted_at":"{ISO}"}
+```
