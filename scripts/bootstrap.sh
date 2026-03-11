@@ -1,12 +1,14 @@
 #!/bin/bash
-# Bootstrap: Copy skill folders from xerushub source into skills/
+# Bootstrap: Copy skill folders from xerushub source into repo root
 # Usage: ./scripts/bootstrap.sh [source_dir]
 #
 # Only copies folders that have both xerushub.json AND SKILL.md.
+# Skill folders live at repo root (not in a skills/ subdirectory)
+# so the submodule path marketplace/skills/{slug}/ resolves correctly.
 # Run once to populate the repo, then manage skills via git.
 
 SOURCE="${1:-D:/openBot/xerus/xerushub_skills}"
-DEST="skills"
+DEST="."
 
 if [ ! -d "$SOURCE" ]; then
     echo "Source directory not found: $SOURCE"
