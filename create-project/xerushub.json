@@ -1,0 +1,7 @@
+{
+  "slug": "create-project",
+  "displayName": "Create Project",
+  "summary": "Interactive workflow to create a project with channels, goals, and team assignments",
+  "tags": ["workspace", "project-management", "onboarding", "workflow"],
+  "version": "1.0.0"
+}

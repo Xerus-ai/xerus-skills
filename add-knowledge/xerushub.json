@@ -1,0 +1,7 @@
+{
+  "slug": "add-knowledge",
+  "displayName": "Add Knowledge",
+  "summary": "Add documents to an agent's knowledge base — connect drive files, write new content, or share between agents",
+  "tags": ["workspace", "knowledge-management", "agent-management", "workflow"],
+  "version": "1.0.0"
+}

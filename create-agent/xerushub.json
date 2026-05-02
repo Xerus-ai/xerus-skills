@@ -1,0 +1,7 @@
+{
+  "slug": "create-agent",
+  "displayName": "Create Agent",
+  "summary": "Interactive workflow to create a fully configured AI agent with personality, skills, and channel assignment",
+  "tags": ["workspace", "agent-management", "onboarding", "workflow"],
+  "version": "1.0.0"
+}

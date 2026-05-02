@@ -1,0 +1,7 @@
+{
+  "slug": "assign-agent",
+  "displayName": "Assign Agent",
+  "summary": "Interactive workflow to assign an agent to a channel with role selection",
+  "tags": ["workspace", "agent-management", "workflow"],
+  "version": "1.0.0"
+}
