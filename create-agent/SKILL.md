@@ -170,7 +170,7 @@ Generate a focused system prompt based on the role, personality, and goals gathe
 If a channel was selected, add the agent as a member:
 
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', '{slug}', 'member');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', '{slug}', 'member');"
 ```
 
 Also update the agent's config.json channels array if not already set.
@@ -210,8 +210,8 @@ Read agents/index.json                          # Agent registered in index?
 ```
 
 ```bash
-sqlite3 data/company.db "SELECT slug, name, status FROM agents WHERE slug = '{slug}';"
-sqlite3 data/company.db "SELECT * FROM channel_members WHERE agent_slug = '{slug}';"
+sqlite3 data/workspace.db "SELECT slug, name, status FROM agents WHERE slug = '{slug}';"
+sqlite3 data/workspace.db "SELECT * FROM channel_members WHERE agent_slug = '{slug}';"
 ```
 
 ### Report to User
@@ -242,7 +242,7 @@ TaskUpdate({ id: task_id, status: "completed" })
 - [ ] `agents/{slug}/BOOTSTRAP.md` exists with `completed_at: null`
 - [ ] `agents/{slug}/RELATIONSHIPS.md` exists with peer map from index.json
 - [ ] `agents/index.json` contains the new agent entry
-- [ ] Agent registered in `data/company.db` agents table
+- [ ] Agent registered in `data/workspace.db` agents table
 - [ ] If channel assigned: `channel_members` row exists
 - [ ] If schedule set: schedule created via MCP tool
 - [ ] If skills selected: skills copied to `.claude/skills/`

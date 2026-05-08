@@ -30,8 +30,8 @@ Read agents/index.json
 ```
 
 ```bash
-sqlite3 data/company.db "SELECT d.slug as project, c.slug as channel_slug, c.name as channel_name, c.lead_agent_slug FROM domains d JOIN channels c ON d.slug = c.domain_slug ORDER BY d.slug, c.slug;"
-sqlite3 data/company.db "SELECT cm.channel_slug, cm.agent_slug, cm.role FROM channel_members cm ORDER BY cm.channel_slug;"
+sqlite3 data/workspace.db "SELECT d.slug as project, c.slug as channel_slug, c.name as channel_name, c.lead_agent_slug FROM domains d JOIN channels c ON d.slug = c.domain_slug ORDER BY d.slug, c.slug;"
+sqlite3 data/workspace.db "SELECT cm.channel_slug, cm.agent_slug, cm.role FROM channel_members cm ORDER BY cm.channel_slug;"
 ```
 
 Build a mental map of: which agents are where, which channels need agents.
@@ -78,15 +78,15 @@ If channel has no lead, default to 'lead' and mention it.
 ### 3a: Insert Channel Member
 
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', '{agent_slug}', '{role}');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', '{agent_slug}', '{role}');"
 ```
 
 ### 3b: Update Lead if Needed
 
 If role is 'lead':
 ```bash
-sqlite3 data/company.db "UPDATE channels SET lead_agent_slug = '{agent_slug}' WHERE slug = '{channel_slug}';"
-sqlite3 data/company.db "UPDATE channel_members SET role = 'member' WHERE channel_slug = '{channel_slug}' AND agent_slug != '{agent_slug}' AND role = 'lead';"
+sqlite3 data/workspace.db "UPDATE channels SET lead_agent_slug = '{agent_slug}' WHERE slug = '{channel_slug}';"
+sqlite3 data/workspace.db "UPDATE channel_members SET role = 'member' WHERE channel_slug = '{channel_slug}' AND agent_slug != '{agent_slug}' AND role = 'lead';"
 ```
 
 ### 3c: Update Agent Config
@@ -100,7 +100,7 @@ Read `projects/{domain}/channels/{channel}/CLAUDE.md`, add the agent to the Team
 ## Step 4: Verify & Report
 
 ```bash
-sqlite3 data/company.db "SELECT agent_slug, role FROM channel_members WHERE channel_slug = '{channel_slug}' ORDER BY role, agent_slug;"
+sqlite3 data/workspace.db "SELECT agent_slug, role FROM channel_members WHERE channel_slug = '{channel_slug}' ORDER BY role, agent_slug;"
 ```
 
 ```

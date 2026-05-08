@@ -32,7 +32,7 @@ Glob('projects/*/CLAUDE.md')                    # existing projects (avoid dupli
 ```
 
 ```bash
-sqlite3 data/company.db "SELECT slug, name FROM domains ORDER BY slug;"
+sqlite3 data/workspace.db "SELECT slug, name FROM domains ORDER BY slug;"
 ```
 
 ## Step 2: Interactive Q&A
@@ -104,7 +104,7 @@ mkdir -p projects/{slug}/knowledge
 ### 3b: Register Domain in DB
 
 ```bash
-sqlite3 data/company.db "INSERT INTO domains (slug, name, description) VALUES ('{slug}', '{name}', '{mission}');"
+sqlite3 data/workspace.db "INSERT INTO domains (slug, name, description) VALUES ('{slug}', '{name}', '{mission}');"
 ```
 
 ### 3c: Write Project CLAUDE.md
@@ -133,7 +133,7 @@ For each channel (including #general):
 
 1. Register in DB:
 ```bash
-sqlite3 data/company.db "INSERT INTO channels (slug, name, domain_slug, description) VALUES ('{domain}--{channel}', '{Channel Name}', '{domain}', '{description}');"
+sqlite3 data/workspace.db "INSERT INTO channels (slug, name, domain_slug, description) VALUES ('{domain}--{channel}', '{Channel Name}', '{domain}', '{description}');"
 ```
 
 2. Create directory structure:
@@ -150,7 +150,7 @@ touch projects/{domain}/channels/{channel}/output/posts.jsonl
 For each agent-channel assignment:
 
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{domain}--{channel}', '{agent_slug}', '{role}');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{domain}--{channel}', '{agent_slug}', '{role}');"
 ```
 
 First agent in each channel gets `role = 'lead'`, rest get `'member'`.
@@ -162,8 +162,8 @@ Also update each agent's config.json channels array.
 Xerus Master and CTO are auto-added to every channel:
 
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', 'xerus-master', 'member');"
-sqlite3 data/company.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', 'xerus-cto', 'member');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', 'xerus-master', 'member');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO channel_members (channel_slug, agent_slug, role) VALUES ('{channel_slug}', 'xerus-cto', 'member');"
 ```
 
 ## Step 4: Verify & Report
@@ -171,9 +171,9 @@ sqlite3 data/company.db "INSERT OR IGNORE INTO channel_members (channel_slug, ag
 ### Verification Checklist
 
 ```bash
-sqlite3 data/company.db "SELECT slug, name FROM domains WHERE slug = '{slug}';"
-sqlite3 data/company.db "SELECT slug, name, lead_agent_slug FROM channels WHERE domain_slug = '{slug}';"
-sqlite3 data/company.db "SELECT channel_slug, agent_slug, role FROM channel_members WHERE channel_slug LIKE '{slug}--%';"
+sqlite3 data/workspace.db "SELECT slug, name FROM domains WHERE slug = '{slug}';"
+sqlite3 data/workspace.db "SELECT slug, name, lead_agent_slug FROM channels WHERE domain_slug = '{slug}';"
+sqlite3 data/workspace.db "SELECT channel_slug, agent_slug, role FROM channel_members WHERE channel_slug LIKE '{slug}--%';"
 ```
 
 ```
@@ -202,7 +202,7 @@ TaskUpdate({ id: task_id, status: "completed" })
 ## Success Criteria
 
 - [ ] `projects/{slug}/CLAUDE.md` exists with mission and OKRs
-- [ ] Domain registered in `data/company.db` domains table
+- [ ] Domain registered in `data/workspace.db` domains table
 - [ ] #general channel exists in DB and filesystem
 - [ ] All requested channels created in DB and filesystem
 - [ ] Each channel has a CLAUDE.md with mission and team section

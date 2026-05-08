@@ -98,12 +98,12 @@ For agent-specific: still install globally (SDK discovers from `.claude/skills/`
 ### 3b: Register in DB
 
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO skills (slug, name, version, source, source_ref, description) VALUES ('{slug}', '{displayName}', '{version}', 'marketplace', 'marketplace/skills/{slug}', '{summary}');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO skills (slug, name, version, source, source_ref, description) VALUES ('{slug}', '{displayName}', '{version}', 'marketplace', 'marketplace/skills/{slug}', '{summary}');"
 ```
 
 If agent-specific, create assignment records:
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO agent_skills (agent_slug, skill_slug, enabled) VALUES ('{agent_slug}', '{slug}', 1);"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO agent_skills (agent_slug, skill_slug, enabled) VALUES ('{agent_slug}', '{slug}', 1);"
 ```
 
 ### 3c: Update Agent Configs (if agent-specific)
@@ -124,12 +124,12 @@ Read .claude/skills/{slug}/SKILL.md              # Readable?
 ```
 
 ```bash
-sqlite3 data/company.db "SELECT slug, name, version FROM skills WHERE slug = '{slug}';"
+sqlite3 data/workspace.db "SELECT slug, name, version FROM skills WHERE slug = '{slug}';"
 ```
 
 If agent-specific:
 ```bash
-sqlite3 data/company.db "SELECT agent_slug, skill_slug, enabled FROM agent_skills WHERE skill_slug = '{slug}';"
+sqlite3 data/workspace.db "SELECT agent_slug, skill_slug, enabled FROM agent_skills WHERE skill_slug = '{slug}';"
 ```
 
 ### Report
@@ -151,7 +151,7 @@ TaskUpdate({ id: task_id, status: "completed" })
 ## Success Criteria
 
 - [ ] `.claude/skills/{slug}/SKILL.md` exists (copied from marketplace)
-- [ ] Skill registered in `data/company.db` skills table
+- [ ] Skill registered in `data/workspace.db` skills table
 - [ ] If agent-specific: `agent_skills` rows exist for each assigned agent
 - [ ] If agent-specific: agent config.json skills arrays updated
 - [ ] Skill was not already installed (no duplicate copy)

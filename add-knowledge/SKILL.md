@@ -191,7 +191,7 @@ cp "agents/{source_slug}/knowledge/{filename}" "agents/{target_slug}/knowledge/{
 ### 3d: Register in DB (for cross-agent discovery)
 
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO agent_knowledge_bases (agent_slug, kb_id, access_level) VALUES ('{slug}', '{filename}', 'read');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO agent_knowledge_bases (agent_slug, kb_id, access_level) VALUES ('{slug}', '{filename}', 'read');"
 ```
 
 ### 3e: Update Module CLAUDE.md
@@ -212,7 +212,7 @@ Glob('agents/{slug}/knowledge/*')                     # Total KB file count
 ```
 
 ```bash
-sqlite3 data/company.db "SELECT agent_slug, kb_id FROM agent_knowledge_bases WHERE agent_slug = '{slug}';"
+sqlite3 data/workspace.db "SELECT agent_slug, kb_id FROM agent_knowledge_bases WHERE agent_slug = '{slug}';"
 ```
 
 ### Report
@@ -247,7 +247,7 @@ cp drive/{file2} agents/{slug}/knowledge/
 
 Register each in DB:
 ```bash
-sqlite3 data/company.db "INSERT OR IGNORE INTO agent_knowledge_bases (agent_slug, kb_id, access_level) VALUES ('{slug}', '{file1}', 'read'), ('{slug}', '{file2}', 'read');"
+sqlite3 data/workspace.db "INSERT OR IGNORE INTO agent_knowledge_bases (agent_slug, kb_id, access_level) VALUES ('{slug}', '{file1}', 'read'), ('{slug}', '{file2}', 'read');"
 ```
 
 ## Success Criteria
@@ -255,7 +255,7 @@ sqlite3 data/company.db "INSERT OR IGNORE INTO agent_knowledge_bases (agent_slug
 - [ ] Knowledge file exists at `agents/{slug}/knowledge/{filename}`
 - [ ] File content is complete and not truncated
 - [ ] File has a descriptive name (not generic like doc.md or temp.txt)
-- [ ] Registered in `agent_knowledge_bases` table in `data/company.db`
+- [ ] Registered in `agent_knowledge_bases` table in `data/workspace.db`
 - [ ] If copied from another source: original file unchanged
 - [ ] If new content: reviewed/approved by user before saving
 - [ ] Agent's knowledge directory is not empty
