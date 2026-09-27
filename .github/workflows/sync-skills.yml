@@ -1,0 +1,176 @@
+name: Sync Skills to S3
+
+# Syncs this repo's skills to the Xerus marketplace bucket. Skills live at
+# {category}/{slug}/SKILL.md; the S3 layout is flat (skills/{slug}/) because
+# folder names are unique across categories. skill.yaml and dotfiles never ship.
+#
+# Skips cleanly (with a notice) until the AWS_ACCESS_KEY_ID and
+# AWS_SECRET_ACCESS_KEY secrets are set on the repository.
+#
+# Manual runs: `full` re-syncs every skill; `purge` also deletes every
+# s3://{bucket}/skills/{slug}/ that is not a skill in this repo (implies full).
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'agents/**'
+      - 'content/**'
+      - 'design/**'
+      - 'dev/**'
+      - 'growth/**'
+      - 'meta/**'
+      - 'ops/**'
+      - 'research/**'
+      - 'global/**'
+      - 'teams/**'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: 'Sync every skill, not just the ones changed in the last commit'
+        type: boolean
+        default: false
+      purge:
+        description: 'Also delete bucket skills that are not in this repo (implies full)'
+        type: boolean
+        default: false
+
+env:
+  CATEGORIES: agents content design dev growth meta ops research global teams
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      HAS_AWS: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+      S3_BUCKET: ${{ vars.S3_MARKETPLACE_BUCKET || 'xerus-marketplace' }}
+    steps:
+      - name: Skip notice (no AWS secrets)
+        if: env.HAS_AWS != 'true'
+        run: echo "::notice::AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are not set on this repository; S3 sync skipped."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_AWS == 'true'
+        with:
+          fetch-depth: 2
+
+      - name: Detect skill folders to sync
+        id: changes
+        if: env.HAS_AWS == 'true'
+        env:
+          FULL: ${{ github.event_name == 'workflow_dispatch' && (inputs.full || inputs.purge) }}
+        run: |
+          set -euo pipefail
+          if [ "$FULL" = "true" ]; then
+            # shellcheck disable=SC2086
+            LIST=$(for c in $CATEGORIES; do find "$c" -name SKILL.md -printf '%h\n' 2>/dev/null; done | sort -u)
+          else
+            # {category}/{slug} for every changed file whose first path segment is a category
+            # shellcheck disable=SC2086
+            LIST=$(git diff --name-only HEAD~1 HEAD -- $CATEGORIES \
+                   | awk -F/ 'NF>=2 {print $1"/"$2}' | sort -u)
+          fi
+          {
+            echo "folders<<EOF"
+            echo "$LIST"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Skill folders: $(echo "$LIST" | wc -w)"
+          echo "$LIST"
+
+      - name: Configure AWS credentials
+        if: env.HAS_AWS == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+
+      - name: Sync skill folders to S3
+        if: env.HAS_AWS == 'true' && steps.changes.outputs.folders != ''
+        env:
+          FOLDERS: ${{ steps.changes.outputs.folders }}
+        run: |
+          set -euo pipefail
+          for path in $FOLDERS; do
+            slug=$(basename "$path")
+            if [ -f "$path/SKILL.md" ]; then
+              echo "Syncing $path -> s3://$S3_BUCKET/skills/$slug/"
+              aws s3 sync "$path" "s3://$S3_BUCKET/skills/$slug/" \
+                --delete \
+                --exclude ".*" \
+                --exclude "skill.yaml"
+            else
+              echo "$path has no SKILL.md (deleted or not a skill); removing s3://$S3_BUCKET/skills/$slug/"
+              aws s3 rm "s3://$S3_BUCKET/skills/$slug/" --recursive
+            fi
+          done
+
+      - name: Purge bucket skills not in this repo
+        if: env.HAS_AWS == 'true' && github.event_name == 'workflow_dispatch' && inputs.purge
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2086
+          KEEP=$(for c in $CATEGORIES; do find "$c" -name SKILL.md -printf '%h\n' 2>/dev/null; done \
+                 | xargs -r -n1 basename | sort -u)
+          if [ -z "$KEEP" ]; then
+            echo "::error::no skills found in the checkout; refusing to purge the bucket"
+            exit 1
+          fi
+          aws s3 ls "s3://$S3_BUCKET/skills/" | awk '$1=="PRE" {print $2}' | sed 's#/$##' \
+            | while read -r slug; do
+                if ! printf '%s\n' "$KEEP" | grep -Fxq -- "$slug"; then
+                  echo "Purging s3://$S3_BUCKET/skills/$slug/"
+                  aws s3 rm "s3://$S3_BUCKET/skills/$slug/" --recursive
+                fi
+              done
+
+      - name: Upsert skill metadata via API
+        if: env.HAS_AWS == 'true' && steps.changes.outputs.folders != '' && vars.XERUS_API_URL != ''
+        env:
+          API_URL: ${{ vars.XERUS_API_URL }}
+          API_KEY: ${{ secrets.XERUS_API_KEY }}
+          FOLDERS: ${{ steps.changes.outputs.folders }}
+        run: |
+          set -euo pipefail
+          pip install --quiet pyyaml
+          cat > /tmp/meta.py <<'PY'
+          import json, sys, re, os, yaml
+          path, slug, category = sys.argv[1:4]
+          meta = {}
+          hub = os.path.join(path, "xerushub.json")
+          if os.path.isfile(hub):
+              meta = json.load(open(hub, encoding="utf-8"))
+          fm = {}
+          text = open(os.path.join(path, "SKILL.md"), encoding="utf-8", errors="ignore").read()
+          m = re.match(r"^---\s*\n(.*?)\n---", text, re.S)
+          if m:
+              try:
+                  fm = yaml.safe_load(m.group(1)) or {}
+              except Exception:
+                  fm = {}
+          count = 0
+          for root, dirs, files in os.walk(path):
+              dirs[:] = [d for d in dirs if not d.startswith(".")]
+              count += len([f for f in files if not f.startswith(".") and f != "skill.yaml"])
+          print(json.dumps({
+              "slug": slug,
+              "name": meta.get("displayName") or fm.get("name") or slug,
+              "description": meta.get("summary") or str(fm.get("description") or "")[:500],
+              "version": meta.get("version") or "1.0.0",
+              "tags": meta.get("tags") or [category],
+              "category": category,
+              "file_count": count,
+          }))
+          PY
+          for path in $FOLDERS; do
+            [ -f "$path/SKILL.md" ] || continue
+            slug=$(basename "$path")
+            category=$(dirname "$path")
+            PAYLOAD=$(python3 /tmp/meta.py "$path" "$slug" "$category")
+            echo "Upserting $slug ($category)"
+            curl -s -X POST "$API_URL/api/v1/skills/seed" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $API_KEY" \
+              -d "$PAYLOAD" || echo "Warning: API upsert failed for $slug"
+          done
